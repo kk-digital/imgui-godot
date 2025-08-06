@@ -27,6 +27,7 @@ protected:
     static void ReplaceTextureRIDs(ImDrawData* drawData);
     RID GetFramebuffer(RID vprid);
     void FreeUnusedTextures();
+    godot::String LoadShaderPathFromConfig();
 
 private:
     struct Impl;

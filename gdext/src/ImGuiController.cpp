@@ -8,6 +8,8 @@
 #include <godot_cpp/classes/gd_script.hpp>
 #include <godot_cpp/classes/packed_scene.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/json.hpp>
 
 namespace ImGui::Godot {
 
@@ -52,6 +54,37 @@ ImGuiController::~ImGuiController()
 {
 }
 
+String ImGuiController::LoadConfigFromJson(const String& key, const String& defaultValue)
+{
+    const String configPath = "res://config/imgui.json";
+    Ref<FileAccess> file = FileAccess::open(configPath, FileAccess::READ);
+
+    if (!file.is_valid()) {
+        UtilityFunctions::push_warning(String("Failed to open imgui config file: ") + configPath + String(", using default: ") + defaultValue);
+        return defaultValue;
+    }
+
+    String jsonString = file->get_as_text();
+    file->close();
+
+    Ref<JSON> json;
+    json.instantiate();
+    Error parseResult = json->parse(jsonString);
+
+    if (parseResult != OK) {
+        UtilityFunctions::push_warning(String("Failed to parse imgui config JSON: ") + json->get_error_message() + String(", using default: ") + defaultValue);
+        return defaultValue;
+    }
+
+    Dictionary data = json->get_data();
+    if (data.has(key)) {
+        return data[key];
+    } else {
+        UtilityFunctions::push_warning(key + String(" not found in imgui config, using default: ") + defaultValue);
+        return defaultValue;
+    }
+}
+
 void ImGuiController::_enter_tree()
 {
     instance = this;
@@ -63,7 +96,10 @@ void ImGuiController::_enter_tree()
     impl->CheckContentScale();
 
     ResourceLoader* RL = ResourceLoader::get_singleton();
-    String cfgPath = ProjectSettings::get_singleton()->get_setting("addons/imgui/config", String());
+
+    String configSettingsPath = LoadConfigFromJson("imgui_config_setting_path", "addons/imgui/config");
+    String cfgPath = ProjectSettings::get_singleton()->get_setting(configSettingsPath, String());
+
     Ref<Resource> cfg;
     if (RL->exists(cfgPath))
     {
@@ -84,8 +120,17 @@ void ImGuiController::_enter_tree()
 
     if (cfg.is_null())
     {
-        Ref<GDScript> script = RL->load("res://addons/imgui-godot/scripts/ImGuiConfig.gd");
-        cfg = script->new_();
+        String defaultConfigScriptPath = LoadConfigFromJson("default_script_path", "res://addons/imgui-godot/scripts/ImGuiConfig.gd");
+        Ref<GDScript> script = RL->load(defaultConfigScriptPath);
+        if (script.is_valid()) {
+            cfg = script->new_();
+        } else {
+            UtilityFunctions::push_error("imgui-godot: failed to load default config script: " + defaultConfigScriptPath);
+            script = RL->load("res://addons/imgui-godot/scripts/ImGuiConfig.gd");
+            if (script.is_valid()) {
+                cfg = script->new_();
+            }
+        }
     }
 
     ImGui::Godot::Init(cfg);
