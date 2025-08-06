@@ -16,6 +16,8 @@
 #include <godot_cpp/classes/rendering_device.hpp>
 #include <godot_cpp/classes/rendering_server.hpp>
 #include <godot_cpp/classes/resource_loader.hpp>
+#include <godot_cpp/classes/file_access.hpp>
+#include <godot_cpp/classes/json.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 #include <imgui.h>
 #include <unordered_map>
@@ -143,6 +145,37 @@ RdRenderer::RdRenderer() : impl(std::make_unique<Impl>())
 {
 }
 
+String RdRenderer::LoadShaderPathFromConfig()
+{
+    const String configPath = "res://config/imgui.json";
+    Ref<FileAccess> file = FileAccess::open(configPath, FileAccess::READ);
+
+    if (!file.is_valid()) {
+        UtilityFunctions::push_error("Failed to open imgui config file: " + configPath);
+        return "res://addons/imgui-godot/data/ImGuiShader.glsl";
+    }
+
+    String jsonString = file->get_as_text();
+    file->close();
+
+    Ref<JSON> json;
+    json.instantiate();
+    Error parseResult = json->parse(jsonString);
+
+    if (parseResult != OK) {
+        UtilityFunctions::push_error("Failed to parse imgui config JSON: " + json->get_error_message());
+        return "res://addons/imgui-godot/data/ImGuiShader.glsl";
+    }
+
+    Dictionary data = json->get_data();
+    if (data.has("shader_path")) {
+        return data["shader_path"];
+    } else {
+        UtilityFunctions::push_warning("shader_path not found in imgui config, using default path");
+        return "res://addons/imgui-godot/data/ImGuiShader.glsl";
+    }
+}
+
 bool RdRenderer::Init()
 {
     RenderingDevice* RD = RenderingServer::get_singleton()->get_rendering_device();
@@ -151,8 +184,13 @@ bool RdRenderer::Init()
 
     // set up everything to match the official Vulkan backend as closely as possible
 
-    Ref<RDShaderFile> shaderFile =
-        ResourceLoader::get_singleton()->load("res://addons/imgui-godot/data/ImGuiShader.glsl");
+    String shaderPath = LoadShaderPathFromConfig();
+    Ref<RDShaderFile> shaderFile = ResourceLoader::get_singleton()->load(shaderPath);
+
+    if (!shaderFile.is_valid()) {
+        UtilityFunctions::push_error("Failed to load shader file: " + shaderPath);
+        return false;
+    }
 
     impl->shader = RD->shader_create_from_spirv(shaderFile->get_spirv());
 

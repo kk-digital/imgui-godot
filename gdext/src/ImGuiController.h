@@ -12,6 +12,7 @@ class ImGuiController : public Node
 
 protected:
     static void _bind_methods();
+    godot::String LoadConfigFromJson(const String& key, const String& defaultValue);
 
 public:
     static ImGuiController* Instance();
