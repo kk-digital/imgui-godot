@@ -80,10 +80,11 @@ libs += [
     "brotlicommon",
 ]
 
+os.makedirs("./bin", exist_ok=True)
+
 if env["platform"] == "macos":
     library = env.SharedLibrary(
-        "{0}/bin/lib{1}.{2}.{3}.framework/{1}.{2}.{3}".format(
-            addon_path,
+        "./bin/lib{0}.{1}.{2}.framework/{0}.{1}.{2}".format(
             project_name,
             env["platform"],
             config,
@@ -94,8 +95,7 @@ if env["platform"] == "macos":
     )
 else:
     library = env.SharedLibrary(
-        "{}/bin/lib{}.{}.{}.{}{}".format(
-            addon_path,
+        "./bin/lib{}.{}.{}.{}{}".format(
             project_name,
             env["platform"],
             config,
