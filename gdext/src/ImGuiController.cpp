@@ -97,8 +97,7 @@ void ImGuiController::_enter_tree()
 
     ResourceLoader* RL = ResourceLoader::get_singleton();
 
-    String configSettingsPath = LoadConfigFromJson("imgui_config_setting_path", "addons/imgui/config");
-    String cfgPath = ProjectSettings::get_singleton()->get_setting(configSettingsPath, String());
+    String cfgPath = LoadConfigFromJson("imgui_config_setting_path", "addons/imgui/config");
 
     Ref<Resource> cfg;
     if (RL->exists(cfgPath))
