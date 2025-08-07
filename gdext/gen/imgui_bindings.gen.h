@@ -52,7 +52,7 @@ public:
     enum ChildFlags
     {
         ChildFlags_None = ImGuiChildFlags_None,
-        ChildFlags_Border = ImGuiChildFlags_Border,
+        ChildFlags_Borders = ImGuiChildFlags_Borders,
         ChildFlags_AlwaysUseWindowPadding = ImGuiChildFlags_AlwaysUseWindowPadding,
         ChildFlags_ResizeX = ImGuiChildFlags_ResizeX,
         ChildFlags_ResizeY = ImGuiChildFlags_ResizeY,
@@ -70,6 +70,7 @@ public:
         ItemFlags_NoNavDefaultFocus = ImGuiItemFlags_NoNavDefaultFocus,
         ItemFlags_ButtonRepeat = ImGuiItemFlags_ButtonRepeat,
         ItemFlags_AutoClosePopups = ImGuiItemFlags_AutoClosePopups,
+        ItemFlags_AllowDuplicateId = ImGuiItemFlags_AllowDuplicateId,
     };
     enum InputTextFlags
     {
@@ -91,6 +92,7 @@ public:
         InputTextFlags_DisplayEmptyRefVal = ImGuiInputTextFlags_DisplayEmptyRefVal,
         InputTextFlags_NoHorizontalScroll = ImGuiInputTextFlags_NoHorizontalScroll,
         InputTextFlags_NoUndoRedo = ImGuiInputTextFlags_NoUndoRedo,
+        InputTextFlags_ElideLeft = ImGuiInputTextFlags_ElideLeft,
         InputTextFlags_CallbackCompletion = ImGuiInputTextFlags_CallbackCompletion,
         InputTextFlags_CallbackHistory = ImGuiInputTextFlags_CallbackHistory,
         InputTextFlags_CallbackAlways = ImGuiInputTextFlags_CallbackAlways,
@@ -446,16 +448,11 @@ public:
         InputFlags_RouteFromRootWindow = ImGuiInputFlags_RouteFromRootWindow,
         InputFlags_Tooltip = ImGuiInputFlags_Tooltip,
     };
-    enum NavInput
-    {
-    };
     enum ConfigFlags
     {
         ConfigFlags_None = ImGuiConfigFlags_None,
         ConfigFlags_NavEnableKeyboard = ImGuiConfigFlags_NavEnableKeyboard,
         ConfigFlags_NavEnableGamepad = ImGuiConfigFlags_NavEnableGamepad,
-        ConfigFlags_NavEnableSetMousePos = ImGuiConfigFlags_NavEnableSetMousePos,
-        ConfigFlags_NavNoCaptureKeyboard = ImGuiConfigFlags_NavNoCaptureKeyboard,
         ConfigFlags_NoMouse = ImGuiConfigFlags_NoMouse,
         ConfigFlags_NoMouseCursorChange = ImGuiConfigFlags_NoMouseCursorChange,
         ConfigFlags_NoKeyboard = ImGuiConfigFlags_NoKeyboard,
@@ -533,7 +530,7 @@ public:
         Col_TextLink = ImGuiCol_TextLink,
         Col_TextSelectedBg = ImGuiCol_TextSelectedBg,
         Col_DragDropTarget = ImGuiCol_DragDropTarget,
-        Col_NavHighlight = ImGuiCol_NavHighlight,
+        Col_NavCursor = ImGuiCol_NavCursor,
         Col_NavWindowingHighlight = ImGuiCol_NavWindowingHighlight,
         Col_NavWindowingDimBg = ImGuiCol_NavWindowingDimBg,
         Col_ModalWindowDimBg = ImGuiCol_ModalWindowDimBg,
@@ -581,6 +578,7 @@ public:
         ButtonFlags_MouseButtonLeft = ImGuiButtonFlags_MouseButtonLeft,
         ButtonFlags_MouseButtonRight = ImGuiButtonFlags_MouseButtonRight,
         ButtonFlags_MouseButtonMiddle = ImGuiButtonFlags_MouseButtonMiddle,
+        ButtonFlags_EnableNav = ImGuiButtonFlags_EnableNav,
     };
     enum ColorEditFlags
     {
@@ -612,11 +610,13 @@ public:
     enum SliderFlags
     {
         SliderFlags_None = ImGuiSliderFlags_None,
-        SliderFlags_AlwaysClamp = ImGuiSliderFlags_AlwaysClamp,
         SliderFlags_Logarithmic = ImGuiSliderFlags_Logarithmic,
         SliderFlags_NoRoundToFormat = ImGuiSliderFlags_NoRoundToFormat,
         SliderFlags_NoInput = ImGuiSliderFlags_NoInput,
         SliderFlags_WrapAround = ImGuiSliderFlags_WrapAround,
+        SliderFlags_ClampOnInput = ImGuiSliderFlags_ClampOnInput,
+        SliderFlags_ClampZeroRange = ImGuiSliderFlags_ClampZeroRange,
+        SliderFlags_AlwaysClamp = ImGuiSliderFlags_AlwaysClamp,
     };
     enum MouseButton
     {
@@ -872,6 +872,8 @@ public:
     static void PopStyleColorEx(int count);
     static void PushStyleVar(ImGui::StyleVar idx, real_t val);
     static void PushStyleVarImVec2(ImGui::StyleVar idx, Vector2 val);
+    static void PushStyleVarX(ImGui::StyleVar idx, real_t val_x);
+    static void PushStyleVarY(ImGui::StyleVar idx, real_t val_y);
     static void PopStyleVar();
     static void PopStyleVarEx(int count);
     static void PushItemFlag(BitField<ImGui::ItemFlags> option, bool enabled);
@@ -1131,7 +1133,7 @@ public:
     static int TableGetHoveredColumn();
     static void TableSetBgColor(ImGui::TableBgTarget target, Color color, int column_n);
     static void Columns();
-    static void ColumnsEx(int count, StringName id, bool border);
+    static void ColumnsEx(int count, StringName id, bool borders);
     static void NextColumn();
     static int GetColumnIndex();
     static real_t GetColumnWidth(int column_index);
@@ -1170,6 +1172,7 @@ public:
     static void SetItemDefaultFocus();
     static void SetKeyboardFocusHere();
     static void SetKeyboardFocusHereEx(int offset);
+    static void SetNavCursorVisible(bool visible);
     static void SetNextItemAllowOverlap();
     static bool IsItemHovered(BitField<ImGui::HoveredFlags> flags);
     static bool IsItemActive();
@@ -1287,6 +1290,8 @@ public:
     static void ImDrawList_AddText(Ref<ImDrawListPtr> self, Vector2 pos, Color col, String text_begin);
     static void ImDrawList_AddTextEx(Ref<ImDrawListPtr> self, Vector2 pos, Color col, String text_begin,
                                      String text_end);
+    static void ImDrawList_AddTextImFontPtr(Ref<ImDrawListPtr> self, int64_t font, real_t font_size, Vector2 pos,
+                                            Color col, String text_begin);
     static void ImDrawList_AddBezierCubic(Ref<ImDrawListPtr> self, Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4,
                                           Color col, real_t thickness, int num_segments);
     static void ImDrawList_AddBezierQuadratic(Ref<ImDrawListPtr> self, Vector2 p1, Vector2 p2, Vector2 p3, Color col,
@@ -1526,6 +1531,20 @@ public:
     void _SetFontDefault(int64_t x);
     Vector2 _GetDisplayFramebufferScale();
     void _SetDisplayFramebufferScale(Vector2 x);
+    bool _GetConfigNavSwapGamepadButtons();
+    void _SetConfigNavSwapGamepadButtons(bool x);
+    bool _GetConfigNavMoveSetMousePos();
+    void _SetConfigNavMoveSetMousePos(bool x);
+    bool _GetConfigNavCaptureKeyboard();
+    void _SetConfigNavCaptureKeyboard(bool x);
+    bool _GetConfigNavEscapeClearFocusItem();
+    void _SetConfigNavEscapeClearFocusItem(bool x);
+    bool _GetConfigNavEscapeClearFocusWindow();
+    void _SetConfigNavEscapeClearFocusWindow(bool x);
+    bool _GetConfigNavCursorVisibleAuto();
+    void _SetConfigNavCursorVisibleAuto(bool x);
+    bool _GetConfigNavCursorVisibleAlways();
+    void _SetConfigNavCursorVisibleAlways(bool x);
     bool _GetConfigDockingNoSplit();
     void _SetConfigDockingNoSplit(bool x);
     bool _GetConfigDockingWithShift();
@@ -1546,8 +1565,6 @@ public:
     void _SetMouseDrawCursor(bool x);
     bool _GetConfigMacOSXBehaviors();
     void _SetConfigMacOSXBehaviors(bool x);
-    bool _GetConfigNavSwapGamepadButtons();
-    void _SetConfigNavSwapGamepadButtons(bool x);
     bool _GetConfigInputTrickleEventQueue();
     void _SetConfigInputTrickleEventQueue(bool x);
     bool _GetConfigInputTextCursorBlink();
@@ -1560,6 +1577,10 @@ public:
     void _SetConfigWindowsResizeFromEdges(bool x);
     bool _GetConfigWindowsMoveFromTitleBarOnly();
     void _SetConfigWindowsMoveFromTitleBarOnly(bool x);
+    bool _GetConfigWindowsCopyContentsWithCtrlC();
+    void _SetConfigWindowsCopyContentsWithCtrlC(bool x);
+    bool _GetConfigScrollbarScrollByPage();
+    void _SetConfigScrollbarScrollByPage(bool x);
     real_t _GetConfigMemoryCompactTimer();
     void _SetConfigMemoryCompactTimer(real_t x);
     real_t _GetMouseDoubleClickTime();
@@ -1572,8 +1593,18 @@ public:
     void _SetKeyRepeatDelay(real_t x);
     real_t _GetKeyRepeatRate();
     void _SetKeyRepeatRate(real_t x);
+    bool _GetConfigErrorRecovery();
+    void _SetConfigErrorRecovery(bool x);
+    bool _GetConfigErrorRecoveryEnableAssert();
+    void _SetConfigErrorRecoveryEnableAssert(bool x);
+    bool _GetConfigErrorRecoveryEnableDebugLog();
+    void _SetConfigErrorRecoveryEnableDebugLog(bool x);
+    bool _GetConfigErrorRecoveryEnableTooltip();
+    void _SetConfigErrorRecoveryEnableTooltip(bool x);
     bool _GetConfigDebugIsDebuggerPresent();
     void _SetConfigDebugIsDebuggerPresent(bool x);
+    bool _GetConfigDebugHighlightIdConflicts();
+    void _SetConfigDebugHighlightIdConflicts(bool x);
     bool _GetConfigDebugBeginReturnValueOnce();
     void _SetConfigDebugBeginReturnValueOnce(bool x);
     bool _GetConfigDebugBeginReturnValueLoop();
@@ -1640,10 +1671,6 @@ public:
     void _SetAppFocusLost(bool x);
     bool _GetAppAcceptingEvents();
     void _SetAppAcceptingEvents(bool x);
-    int8_t _GetBackendUsingLegacyKeyArrays();
-    void _SetBackendUsingLegacyKeyArrays(int8_t x);
-    bool _GetBackendUsingLegacyNavInputArray();
-    void _SetBackendUsingLegacyNavInputArray(bool x);
 
 private:
     ImGuiIO* ptr = nullptr;
@@ -1797,7 +1824,6 @@ VARIANT_ENUM_CAST(ImGui::Godot::ImGui::Dir);
 VARIANT_ENUM_CAST(ImGui::Godot::ImGui::SortDirection);
 VARIANT_ENUM_CAST(ImGui::Godot::ImGui::Key);
 VARIANT_BITFIELD_CAST(ImGui::Godot::ImGui::InputFlags);
-VARIANT_ENUM_CAST(ImGui::Godot::ImGui::NavInput);
 VARIANT_BITFIELD_CAST(ImGui::Godot::ImGui::ConfigFlags);
 VARIANT_BITFIELD_CAST(ImGui::Godot::ImGui::BackendFlags);
 VARIANT_ENUM_CAST(ImGui::Godot::ImGui::Col);

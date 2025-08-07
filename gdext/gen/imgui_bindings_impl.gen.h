@@ -31,7 +31,7 @@ void ImGui::_bind_methods()
     BIND_BITFIELD_FLAG(WindowFlags_ChildMenu);
     BIND_BITFIELD_FLAG(WindowFlags_DockNodeHost);
     BIND_BITFIELD_FLAG(ChildFlags_None);
-    BIND_BITFIELD_FLAG(ChildFlags_Border);
+    BIND_BITFIELD_FLAG(ChildFlags_Borders);
     BIND_BITFIELD_FLAG(ChildFlags_AlwaysUseWindowPadding);
     BIND_BITFIELD_FLAG(ChildFlags_ResizeX);
     BIND_BITFIELD_FLAG(ChildFlags_ResizeY);
@@ -46,6 +46,7 @@ void ImGui::_bind_methods()
     BIND_BITFIELD_FLAG(ItemFlags_NoNavDefaultFocus);
     BIND_BITFIELD_FLAG(ItemFlags_ButtonRepeat);
     BIND_BITFIELD_FLAG(ItemFlags_AutoClosePopups);
+    BIND_BITFIELD_FLAG(ItemFlags_AllowDuplicateId);
     BIND_BITFIELD_FLAG(InputTextFlags_None);
     BIND_BITFIELD_FLAG(InputTextFlags_CharsDecimal);
     BIND_BITFIELD_FLAG(InputTextFlags_CharsHexadecimal);
@@ -64,6 +65,7 @@ void ImGui::_bind_methods()
     BIND_BITFIELD_FLAG(InputTextFlags_DisplayEmptyRefVal);
     BIND_BITFIELD_FLAG(InputTextFlags_NoHorizontalScroll);
     BIND_BITFIELD_FLAG(InputTextFlags_NoUndoRedo);
+    BIND_BITFIELD_FLAG(InputTextFlags_ElideLeft);
     BIND_BITFIELD_FLAG(InputTextFlags_CallbackCompletion);
     BIND_BITFIELD_FLAG(InputTextFlags_CallbackHistory);
     BIND_BITFIELD_FLAG(InputTextFlags_CallbackAlways);
@@ -373,12 +375,9 @@ void ImGui::_bind_methods()
     BIND_BITFIELD_FLAG(InputFlags_RouteUnlessBgFocused);
     BIND_BITFIELD_FLAG(InputFlags_RouteFromRootWindow);
     BIND_BITFIELD_FLAG(InputFlags_Tooltip);
-
     BIND_BITFIELD_FLAG(ConfigFlags_None);
     BIND_BITFIELD_FLAG(ConfigFlags_NavEnableKeyboard);
     BIND_BITFIELD_FLAG(ConfigFlags_NavEnableGamepad);
-    BIND_BITFIELD_FLAG(ConfigFlags_NavEnableSetMousePos);
-    BIND_BITFIELD_FLAG(ConfigFlags_NavNoCaptureKeyboard);
     BIND_BITFIELD_FLAG(ConfigFlags_NoMouse);
     BIND_BITFIELD_FLAG(ConfigFlags_NoMouseCursorChange);
     BIND_BITFIELD_FLAG(ConfigFlags_NoKeyboard);
@@ -450,7 +449,7 @@ void ImGui::_bind_methods()
     BIND_ENUM_CONSTANT(Col_TextLink);
     BIND_ENUM_CONSTANT(Col_TextSelectedBg);
     BIND_ENUM_CONSTANT(Col_DragDropTarget);
-    BIND_ENUM_CONSTANT(Col_NavHighlight);
+    BIND_ENUM_CONSTANT(Col_NavCursor);
     BIND_ENUM_CONSTANT(Col_NavWindowingHighlight);
     BIND_ENUM_CONSTANT(Col_NavWindowingDimBg);
     BIND_ENUM_CONSTANT(Col_ModalWindowDimBg);
@@ -492,6 +491,7 @@ void ImGui::_bind_methods()
     BIND_BITFIELD_FLAG(ButtonFlags_MouseButtonLeft);
     BIND_BITFIELD_FLAG(ButtonFlags_MouseButtonRight);
     BIND_BITFIELD_FLAG(ButtonFlags_MouseButtonMiddle);
+    BIND_BITFIELD_FLAG(ButtonFlags_EnableNav);
     BIND_BITFIELD_FLAG(ColorEditFlags_None);
     BIND_BITFIELD_FLAG(ColorEditFlags_NoAlpha);
     BIND_BITFIELD_FLAG(ColorEditFlags_NoPicker);
@@ -517,11 +517,13 @@ void ImGui::_bind_methods()
     BIND_BITFIELD_FLAG(ColorEditFlags_InputRGB);
     BIND_BITFIELD_FLAG(ColorEditFlags_InputHSV);
     BIND_BITFIELD_FLAG(SliderFlags_None);
-    BIND_BITFIELD_FLAG(SliderFlags_AlwaysClamp);
     BIND_BITFIELD_FLAG(SliderFlags_Logarithmic);
     BIND_BITFIELD_FLAG(SliderFlags_NoRoundToFormat);
     BIND_BITFIELD_FLAG(SliderFlags_NoInput);
     BIND_BITFIELD_FLAG(SliderFlags_WrapAround);
+    BIND_BITFIELD_FLAG(SliderFlags_ClampOnInput);
+    BIND_BITFIELD_FLAG(SliderFlags_ClampZeroRange);
+    BIND_BITFIELD_FLAG(SliderFlags_AlwaysClamp);
     BIND_ENUM_CONSTANT(MouseButton_Left);
     BIND_ENUM_CONSTANT(MouseButton_Right);
     BIND_ENUM_CONSTANT(MouseButton_Middle);
@@ -820,6 +822,8 @@ void ImGui::_bind_methods()
     ClassDB::bind_static_method("ImGui", D_METHOD("PopStyleColorEx", "count"), &ImGui::PopStyleColorEx, DEFVAL(1));
     ClassDB::bind_static_method("ImGui", D_METHOD("PushStyleVar", "idx", "val"), &ImGui::PushStyleVar);
     ClassDB::bind_static_method("ImGui", D_METHOD("PushStyleVarImVec2", "idx", "val"), &ImGui::PushStyleVarImVec2);
+    ClassDB::bind_static_method("ImGui", D_METHOD("PushStyleVarX", "idx", "val_x"), &ImGui::PushStyleVarX);
+    ClassDB::bind_static_method("ImGui", D_METHOD("PushStyleVarY", "idx", "val_y"), &ImGui::PushStyleVarY);
     ClassDB::bind_static_method("ImGui", D_METHOD("PopStyleVar"), &ImGui::PopStyleVar);
     ClassDB::bind_static_method("ImGui", D_METHOD("PopStyleVarEx", "count"), &ImGui::PopStyleVarEx, DEFVAL(1));
     ClassDB::bind_static_method("ImGui", D_METHOD("PushItemFlag", "option", "enabled"), &ImGui::PushItemFlag);
@@ -1442,7 +1446,7 @@ void ImGui::_bind_methods()
                                 DEFVAL(-1));
     ClassDB::bind_static_method("ImGui", D_METHOD("Columns"), &ImGui::Columns);
     ClassDB::bind_static_method("ImGui",
-                                D_METHOD("ColumnsEx", "count", "id", "border"),
+                                D_METHOD("ColumnsEx", "count", "id", "borders"),
                                 &ImGui::ColumnsEx,
                                 DEFVAL(1),
                                 DEFVAL(StringName()),
@@ -1522,6 +1526,7 @@ void ImGui::_bind_methods()
                                 D_METHOD("SetKeyboardFocusHereEx", "offset"),
                                 &ImGui::SetKeyboardFocusHereEx,
                                 DEFVAL(0));
+    ClassDB::bind_static_method("ImGui", D_METHOD("SetNavCursorVisible", "visible"), &ImGui::SetNavCursorVisible);
     ClassDB::bind_static_method("ImGui", D_METHOD("SetNextItemAllowOverlap"), &ImGui::SetNextItemAllowOverlap);
     ClassDB::bind_static_method("ImGui", D_METHOD("IsItemHovered", "flags"), &ImGui::IsItemHovered, DEFVAL(0));
     ClassDB::bind_static_method("ImGui", D_METHOD("IsItemActive"), &ImGui::IsItemActive);
@@ -1781,6 +1786,10 @@ void ImGui::_bind_methods()
                                 D_METHOD("ImDrawList_AddTextEx", "self", "pos", "col", "text_begin", "text_end"),
                                 &ImGui::ImDrawList_AddTextEx,
                                 DEFVAL(String()));
+    ClassDB::bind_static_method(
+        "ImGui",
+        D_METHOD("ImDrawList_AddTextImFontPtr", "self", "font", "font_size", "pos", "col", "text_begin"),
+        &ImGui::ImDrawList_AddTextImFontPtr);
     ClassDB::bind_static_method(
         "ImGui",
         D_METHOD("ImDrawList_AddBezierCubic", "self", "p1", "p2", "p3", "p4", "col", "thickness", "num_segments"),
@@ -2851,6 +2860,46 @@ void ImGuiIOPtr::_bind_methods()
     ADD_PROPERTY(PropertyInfo(Variant::VECTOR2, "DisplayFramebufferScale"),
                  "_SetDisplayFramebufferScale",
                  "_GetDisplayFramebufferScale");
+    ClassDB::bind_method(D_METHOD("_GetConfigNavSwapGamepadButtons"), &ImGuiIOPtr::_GetConfigNavSwapGamepadButtons);
+    ClassDB::bind_method(D_METHOD("_SetConfigNavSwapGamepadButtons", "x"),
+                         &ImGuiIOPtr::_SetConfigNavSwapGamepadButtons);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigNavSwapGamepadButtons"),
+                 "_SetConfigNavSwapGamepadButtons",
+                 "_GetConfigNavSwapGamepadButtons");
+    ClassDB::bind_method(D_METHOD("_GetConfigNavMoveSetMousePos"), &ImGuiIOPtr::_GetConfigNavMoveSetMousePos);
+    ClassDB::bind_method(D_METHOD("_SetConfigNavMoveSetMousePos", "x"), &ImGuiIOPtr::_SetConfigNavMoveSetMousePos);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigNavMoveSetMousePos"),
+                 "_SetConfigNavMoveSetMousePos",
+                 "_GetConfigNavMoveSetMousePos");
+    ClassDB::bind_method(D_METHOD("_GetConfigNavCaptureKeyboard"), &ImGuiIOPtr::_GetConfigNavCaptureKeyboard);
+    ClassDB::bind_method(D_METHOD("_SetConfigNavCaptureKeyboard", "x"), &ImGuiIOPtr::_SetConfigNavCaptureKeyboard);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigNavCaptureKeyboard"),
+                 "_SetConfigNavCaptureKeyboard",
+                 "_GetConfigNavCaptureKeyboard");
+    ClassDB::bind_method(D_METHOD("_GetConfigNavEscapeClearFocusItem"), &ImGuiIOPtr::_GetConfigNavEscapeClearFocusItem);
+    ClassDB::bind_method(D_METHOD("_SetConfigNavEscapeClearFocusItem", "x"),
+                         &ImGuiIOPtr::_SetConfigNavEscapeClearFocusItem);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigNavEscapeClearFocusItem"),
+                 "_SetConfigNavEscapeClearFocusItem",
+                 "_GetConfigNavEscapeClearFocusItem");
+    ClassDB::bind_method(D_METHOD("_GetConfigNavEscapeClearFocusWindow"),
+                         &ImGuiIOPtr::_GetConfigNavEscapeClearFocusWindow);
+    ClassDB::bind_method(D_METHOD("_SetConfigNavEscapeClearFocusWindow", "x"),
+                         &ImGuiIOPtr::_SetConfigNavEscapeClearFocusWindow);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigNavEscapeClearFocusWindow"),
+                 "_SetConfigNavEscapeClearFocusWindow",
+                 "_GetConfigNavEscapeClearFocusWindow");
+    ClassDB::bind_method(D_METHOD("_GetConfigNavCursorVisibleAuto"), &ImGuiIOPtr::_GetConfigNavCursorVisibleAuto);
+    ClassDB::bind_method(D_METHOD("_SetConfigNavCursorVisibleAuto", "x"), &ImGuiIOPtr::_SetConfigNavCursorVisibleAuto);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigNavCursorVisibleAuto"),
+                 "_SetConfigNavCursorVisibleAuto",
+                 "_GetConfigNavCursorVisibleAuto");
+    ClassDB::bind_method(D_METHOD("_GetConfigNavCursorVisibleAlways"), &ImGuiIOPtr::_GetConfigNavCursorVisibleAlways);
+    ClassDB::bind_method(D_METHOD("_SetConfigNavCursorVisibleAlways", "x"),
+                         &ImGuiIOPtr::_SetConfigNavCursorVisibleAlways);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigNavCursorVisibleAlways"),
+                 "_SetConfigNavCursorVisibleAlways",
+                 "_GetConfigNavCursorVisibleAlways");
     ClassDB::bind_method(D_METHOD("_GetConfigDockingNoSplit"), &ImGuiIOPtr::_GetConfigDockingNoSplit);
     ClassDB::bind_method(D_METHOD("_SetConfigDockingNoSplit", "x"), &ImGuiIOPtr::_SetConfigDockingNoSplit);
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigDockingNoSplit"),
@@ -2905,12 +2954,6 @@ void ImGuiIOPtr::_bind_methods()
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigMacOSXBehaviors"),
                  "_SetConfigMacOSXBehaviors",
                  "_GetConfigMacOSXBehaviors");
-    ClassDB::bind_method(D_METHOD("_GetConfigNavSwapGamepadButtons"), &ImGuiIOPtr::_GetConfigNavSwapGamepadButtons);
-    ClassDB::bind_method(D_METHOD("_SetConfigNavSwapGamepadButtons", "x"),
-                         &ImGuiIOPtr::_SetConfigNavSwapGamepadButtons);
-    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigNavSwapGamepadButtons"),
-                 "_SetConfigNavSwapGamepadButtons",
-                 "_GetConfigNavSwapGamepadButtons");
     ClassDB::bind_method(D_METHOD("_GetConfigInputTrickleEventQueue"), &ImGuiIOPtr::_GetConfigInputTrickleEventQueue);
     ClassDB::bind_method(D_METHOD("_SetConfigInputTrickleEventQueue", "x"),
                          &ImGuiIOPtr::_SetConfigInputTrickleEventQueue);
@@ -2947,6 +2990,19 @@ void ImGuiIOPtr::_bind_methods()
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigWindowsMoveFromTitleBarOnly"),
                  "_SetConfigWindowsMoveFromTitleBarOnly",
                  "_GetConfigWindowsMoveFromTitleBarOnly");
+    ClassDB::bind_method(D_METHOD("_GetConfigWindowsCopyContentsWithCtrlC"),
+                         &ImGuiIOPtr::_GetConfigWindowsCopyContentsWithCtrlC);
+    ClassDB::bind_method(D_METHOD("_SetConfigWindowsCopyContentsWithCtrlC", "x"),
+                         &ImGuiIOPtr::_SetConfigWindowsCopyContentsWithCtrlC);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigWindowsCopyContentsWithCtrlC"),
+                 "_SetConfigWindowsCopyContentsWithCtrlC",
+                 "_GetConfigWindowsCopyContentsWithCtrlC");
+    ClassDB::bind_method(D_METHOD("_GetConfigScrollbarScrollByPage"), &ImGuiIOPtr::_GetConfigScrollbarScrollByPage);
+    ClassDB::bind_method(D_METHOD("_SetConfigScrollbarScrollByPage", "x"),
+                         &ImGuiIOPtr::_SetConfigScrollbarScrollByPage);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigScrollbarScrollByPage"),
+                 "_SetConfigScrollbarScrollByPage",
+                 "_GetConfigScrollbarScrollByPage");
     ClassDB::bind_method(D_METHOD("_GetConfigMemoryCompactTimer"), &ImGuiIOPtr::_GetConfigMemoryCompactTimer);
     ClassDB::bind_method(D_METHOD("_SetConfigMemoryCompactTimer", "x"), &ImGuiIOPtr::_SetConfigMemoryCompactTimer);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "ConfigMemoryCompactTimer"),
@@ -2971,12 +3027,45 @@ void ImGuiIOPtr::_bind_methods()
     ClassDB::bind_method(D_METHOD("_GetKeyRepeatRate"), &ImGuiIOPtr::_GetKeyRepeatRate);
     ClassDB::bind_method(D_METHOD("_SetKeyRepeatRate", "x"), &ImGuiIOPtr::_SetKeyRepeatRate);
     ADD_PROPERTY(PropertyInfo(Variant::INT, "KeyRepeatRate"), "_SetKeyRepeatRate", "_GetKeyRepeatRate");
+    ClassDB::bind_method(D_METHOD("_GetConfigErrorRecovery"), &ImGuiIOPtr::_GetConfigErrorRecovery);
+    ClassDB::bind_method(D_METHOD("_SetConfigErrorRecovery", "x"), &ImGuiIOPtr::_SetConfigErrorRecovery);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigErrorRecovery"),
+                 "_SetConfigErrorRecovery",
+                 "_GetConfigErrorRecovery");
+    ClassDB::bind_method(D_METHOD("_GetConfigErrorRecoveryEnableAssert"),
+                         &ImGuiIOPtr::_GetConfigErrorRecoveryEnableAssert);
+    ClassDB::bind_method(D_METHOD("_SetConfigErrorRecoveryEnableAssert", "x"),
+                         &ImGuiIOPtr::_SetConfigErrorRecoveryEnableAssert);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigErrorRecoveryEnableAssert"),
+                 "_SetConfigErrorRecoveryEnableAssert",
+                 "_GetConfigErrorRecoveryEnableAssert");
+    ClassDB::bind_method(D_METHOD("_GetConfigErrorRecoveryEnableDebugLog"),
+                         &ImGuiIOPtr::_GetConfigErrorRecoveryEnableDebugLog);
+    ClassDB::bind_method(D_METHOD("_SetConfigErrorRecoveryEnableDebugLog", "x"),
+                         &ImGuiIOPtr::_SetConfigErrorRecoveryEnableDebugLog);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigErrorRecoveryEnableDebugLog"),
+                 "_SetConfigErrorRecoveryEnableDebugLog",
+                 "_GetConfigErrorRecoveryEnableDebugLog");
+    ClassDB::bind_method(D_METHOD("_GetConfigErrorRecoveryEnableTooltip"),
+                         &ImGuiIOPtr::_GetConfigErrorRecoveryEnableTooltip);
+    ClassDB::bind_method(D_METHOD("_SetConfigErrorRecoveryEnableTooltip", "x"),
+                         &ImGuiIOPtr::_SetConfigErrorRecoveryEnableTooltip);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigErrorRecoveryEnableTooltip"),
+                 "_SetConfigErrorRecoveryEnableTooltip",
+                 "_GetConfigErrorRecoveryEnableTooltip");
     ClassDB::bind_method(D_METHOD("_GetConfigDebugIsDebuggerPresent"), &ImGuiIOPtr::_GetConfigDebugIsDebuggerPresent);
     ClassDB::bind_method(D_METHOD("_SetConfigDebugIsDebuggerPresent", "x"),
                          &ImGuiIOPtr::_SetConfigDebugIsDebuggerPresent);
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigDebugIsDebuggerPresent"),
                  "_SetConfigDebugIsDebuggerPresent",
                  "_GetConfigDebugIsDebuggerPresent");
+    ClassDB::bind_method(D_METHOD("_GetConfigDebugHighlightIdConflicts"),
+                         &ImGuiIOPtr::_GetConfigDebugHighlightIdConflicts);
+    ClassDB::bind_method(D_METHOD("_SetConfigDebugHighlightIdConflicts", "x"),
+                         &ImGuiIOPtr::_SetConfigDebugHighlightIdConflicts);
+    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "ConfigDebugHighlightIdConflicts"),
+                 "_SetConfigDebugHighlightIdConflicts",
+                 "_GetConfigDebugHighlightIdConflicts");
     ClassDB::bind_method(D_METHOD("_GetConfigDebugBeginReturnValueOnce"),
                          &ImGuiIOPtr::_GetConfigDebugBeginReturnValueOnce);
     ClassDB::bind_method(D_METHOD("_SetConfigDebugBeginReturnValueOnce", "x"),
@@ -3110,19 +3199,6 @@ void ImGuiIOPtr::_bind_methods()
     ClassDB::bind_method(D_METHOD("_GetAppAcceptingEvents"), &ImGuiIOPtr::_GetAppAcceptingEvents);
     ClassDB::bind_method(D_METHOD("_SetAppAcceptingEvents", "x"), &ImGuiIOPtr::_SetAppAcceptingEvents);
     ADD_PROPERTY(PropertyInfo(Variant::BOOL, "AppAcceptingEvents"), "_SetAppAcceptingEvents", "_GetAppAcceptingEvents");
-    ClassDB::bind_method(D_METHOD("_GetBackendUsingLegacyKeyArrays"), &ImGuiIOPtr::_GetBackendUsingLegacyKeyArrays);
-    ClassDB::bind_method(D_METHOD("_SetBackendUsingLegacyKeyArrays", "x"),
-                         &ImGuiIOPtr::_SetBackendUsingLegacyKeyArrays);
-    ADD_PROPERTY(PropertyInfo(Variant::INT, "BackendUsingLegacyKeyArrays"),
-                 "_SetBackendUsingLegacyKeyArrays",
-                 "_GetBackendUsingLegacyKeyArrays");
-    ClassDB::bind_method(D_METHOD("_GetBackendUsingLegacyNavInputArray"),
-                         &ImGuiIOPtr::_GetBackendUsingLegacyNavInputArray);
-    ClassDB::bind_method(D_METHOD("_SetBackendUsingLegacyNavInputArray", "x"),
-                         &ImGuiIOPtr::_SetBackendUsingLegacyNavInputArray);
-    ADD_PROPERTY(PropertyInfo(Variant::BOOL, "BackendUsingLegacyNavInputArray"),
-                 "_SetBackendUsingLegacyNavInputArray",
-                 "_GetBackendUsingLegacyNavInputArray");
 }
 BitField<ImGui::ConfigFlags> ImGuiIOPtr::_GetConfigFlags()
 {
@@ -3222,6 +3298,83 @@ Vector2 ImGuiIOPtr::_GetDisplayFramebufferScale()
 void ImGuiIOPtr::_SetDisplayFramebufferScale(Vector2 x)
 {
     ptr->DisplayFramebufferScale = {static_cast<float>(x.x), static_cast<float>(x.y)};
+}
+bool ImGuiIOPtr::_GetConfigNavSwapGamepadButtons()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigNavSwapGamepadButtons;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigNavSwapGamepadButtons(bool x)
+{
+    ptr->ConfigNavSwapGamepadButtons = x;
+}
+bool ImGuiIOPtr::_GetConfigNavMoveSetMousePos()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigNavMoveSetMousePos;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigNavMoveSetMousePos(bool x)
+{
+    ptr->ConfigNavMoveSetMousePos = x;
+}
+bool ImGuiIOPtr::_GetConfigNavCaptureKeyboard()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigNavCaptureKeyboard;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigNavCaptureKeyboard(bool x)
+{
+    ptr->ConfigNavCaptureKeyboard = x;
+}
+bool ImGuiIOPtr::_GetConfigNavEscapeClearFocusItem()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigNavEscapeClearFocusItem;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigNavEscapeClearFocusItem(bool x)
+{
+    ptr->ConfigNavEscapeClearFocusItem = x;
+}
+bool ImGuiIOPtr::_GetConfigNavEscapeClearFocusWindow()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigNavEscapeClearFocusWindow;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigNavEscapeClearFocusWindow(bool x)
+{
+    ptr->ConfigNavEscapeClearFocusWindow = x;
+}
+bool ImGuiIOPtr::_GetConfigNavCursorVisibleAuto()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigNavCursorVisibleAuto;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigNavCursorVisibleAuto(bool x)
+{
+    ptr->ConfigNavCursorVisibleAuto = x;
+}
+bool ImGuiIOPtr::_GetConfigNavCursorVisibleAlways()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigNavCursorVisibleAlways;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigNavCursorVisibleAlways(bool x)
+{
+    ptr->ConfigNavCursorVisibleAlways = x;
 }
 bool ImGuiIOPtr::_GetConfigDockingNoSplit()
 {
@@ -3333,17 +3486,6 @@ void ImGuiIOPtr::_SetConfigMacOSXBehaviors(bool x)
 {
     ptr->ConfigMacOSXBehaviors = x;
 }
-bool ImGuiIOPtr::_GetConfigNavSwapGamepadButtons()
-{
-    if (ptr) [[likely]]
-        return ptr->ConfigNavSwapGamepadButtons;
-    else
-        return {};
-}
-void ImGuiIOPtr::_SetConfigNavSwapGamepadButtons(bool x)
-{
-    ptr->ConfigNavSwapGamepadButtons = x;
-}
 bool ImGuiIOPtr::_GetConfigInputTrickleEventQueue()
 {
     if (ptr) [[likely]]
@@ -3409,6 +3551,28 @@ bool ImGuiIOPtr::_GetConfigWindowsMoveFromTitleBarOnly()
 void ImGuiIOPtr::_SetConfigWindowsMoveFromTitleBarOnly(bool x)
 {
     ptr->ConfigWindowsMoveFromTitleBarOnly = x;
+}
+bool ImGuiIOPtr::_GetConfigWindowsCopyContentsWithCtrlC()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigWindowsCopyContentsWithCtrlC;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigWindowsCopyContentsWithCtrlC(bool x)
+{
+    ptr->ConfigWindowsCopyContentsWithCtrlC = x;
+}
+bool ImGuiIOPtr::_GetConfigScrollbarScrollByPage()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigScrollbarScrollByPage;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigScrollbarScrollByPage(bool x)
+{
+    ptr->ConfigScrollbarScrollByPage = x;
 }
 real_t ImGuiIOPtr::_GetConfigMemoryCompactTimer()
 {
@@ -3476,6 +3640,50 @@ void ImGuiIOPtr::_SetKeyRepeatRate(real_t x)
 {
     ptr->KeyRepeatRate = x;
 }
+bool ImGuiIOPtr::_GetConfigErrorRecovery()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigErrorRecovery;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigErrorRecovery(bool x)
+{
+    ptr->ConfigErrorRecovery = x;
+}
+bool ImGuiIOPtr::_GetConfigErrorRecoveryEnableAssert()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigErrorRecoveryEnableAssert;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigErrorRecoveryEnableAssert(bool x)
+{
+    ptr->ConfigErrorRecoveryEnableAssert = x;
+}
+bool ImGuiIOPtr::_GetConfigErrorRecoveryEnableDebugLog()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigErrorRecoveryEnableDebugLog;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigErrorRecoveryEnableDebugLog(bool x)
+{
+    ptr->ConfigErrorRecoveryEnableDebugLog = x;
+}
+bool ImGuiIOPtr::_GetConfigErrorRecoveryEnableTooltip()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigErrorRecoveryEnableTooltip;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigErrorRecoveryEnableTooltip(bool x)
+{
+    ptr->ConfigErrorRecoveryEnableTooltip = x;
+}
 bool ImGuiIOPtr::_GetConfigDebugIsDebuggerPresent()
 {
     if (ptr) [[likely]]
@@ -3486,6 +3694,17 @@ bool ImGuiIOPtr::_GetConfigDebugIsDebuggerPresent()
 void ImGuiIOPtr::_SetConfigDebugIsDebuggerPresent(bool x)
 {
     ptr->ConfigDebugIsDebuggerPresent = x;
+}
+bool ImGuiIOPtr::_GetConfigDebugHighlightIdConflicts()
+{
+    if (ptr) [[likely]]
+        return ptr->ConfigDebugHighlightIdConflicts;
+    else
+        return {};
+}
+void ImGuiIOPtr::_SetConfigDebugHighlightIdConflicts(bool x)
+{
+    ptr->ConfigDebugHighlightIdConflicts = x;
 }
 bool ImGuiIOPtr::_GetConfigDebugBeginReturnValueOnce()
 {
@@ -3849,28 +4068,6 @@ bool ImGuiIOPtr::_GetAppAcceptingEvents()
 void ImGuiIOPtr::_SetAppAcceptingEvents(bool x)
 {
     ptr->AppAcceptingEvents = x;
-}
-int8_t ImGuiIOPtr::_GetBackendUsingLegacyKeyArrays()
-{
-    if (ptr) [[likely]]
-        return ptr->BackendUsingLegacyKeyArrays;
-    else
-        return {};
-}
-void ImGuiIOPtr::_SetBackendUsingLegacyKeyArrays(int8_t x)
-{
-    ptr->BackendUsingLegacyKeyArrays = x;
-}
-bool ImGuiIOPtr::_GetBackendUsingLegacyNavInputArray()
-{
-    if (ptr) [[likely]]
-        return ptr->BackendUsingLegacyNavInputArray;
-    else
-        return {};
-}
-void ImGuiIOPtr::_SetBackendUsingLegacyNavInputArray(bool x)
-{
-    ptr->BackendUsingLegacyNavInputArray = x;
 }
 void ImGuiWindowClassPtr::_bind_methods()
 {
@@ -4585,6 +4782,14 @@ void ImGui::PushStyleVar(ImGui::StyleVar idx, real_t val)
 void ImGui::PushStyleVarImVec2(ImGui::StyleVar idx, Vector2 val)
 {
     ::ImGui_PushStyleVarImVec2(idx, {static_cast<float>(val.x), static_cast<float>(val.y)});
+}
+void ImGui::PushStyleVarX(ImGui::StyleVar idx, real_t val_x)
+{
+    ::ImGui_PushStyleVarX(idx, val_x);
+}
+void ImGui::PushStyleVarY(ImGui::StyleVar idx, real_t val_y)
+{
+    ::ImGui_PushStyleVarY(idx, val_y);
 }
 void ImGui::PopStyleVar()
 {
@@ -5747,9 +5952,9 @@ void ImGui::Columns()
 {
     ::ImGui_Columns();
 }
-void ImGui::ColumnsEx(int count, StringName id, bool border)
+void ImGui::ColumnsEx(int count, StringName id, bool borders)
 {
-    ::ImGui_ColumnsEx(count, sn_to_cstr(id), border);
+    ::ImGui_ColumnsEx(count, sn_to_cstr(id), borders);
 }
 void ImGui::NextColumn()
 {
@@ -5904,6 +6109,10 @@ void ImGui::SetKeyboardFocusHere()
 void ImGui::SetKeyboardFocusHereEx(int offset)
 {
     ::ImGui_SetKeyboardFocusHereEx(offset);
+}
+void ImGui::SetNavCursorVisible(bool visible)
+{
+    ::ImGui_SetNavCursorVisible(visible);
 }
 void ImGui::SetNextItemAllowOverlap()
 {
@@ -6452,6 +6661,16 @@ void ImGui::ImDrawList_AddTextEx(Ref<ImDrawListPtr> self, Vector2 pos, Color col
                            col.to_abgr32(),
                            text_begin.utf8().get_data(),
                            text_end.ptr() ? text_end.utf8().get_data() : nullptr);
+}
+void ImGui::ImDrawList_AddTextImFontPtr(Ref<ImDrawListPtr> self, int64_t font, real_t font_size, Vector2 pos, Color col,
+                                        String text_begin)
+{
+    ::ImDrawList_AddTextImFontPtr(self->_GetPtr(),
+                                  (ImFont*)font,
+                                  font_size,
+                                  {static_cast<float>(pos.x), static_cast<float>(pos.y)},
+                                  col.to_abgr32(),
+                                  text_begin.utf8().get_data());
 }
 void ImGui::ImDrawList_AddBezierCubic(Ref<ImDrawListPtr> self, Vector2 p1, Vector2 p2, Vector2 p3, Vector2 p4,
                                       Color col, real_t thickness, int num_segments)
